@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>鳴潮 聲骸搭配表</title>
+    <!-- 引入 Tailwind CSS 來美化版面 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 隱藏捲軸但保留滾動功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8 font-sans">
+
+    <!-- max-w-[95%] 讓表格可以隨著螢幕解析度展開到最大 -->
+    <div class="max-w-[95%] mx-auto bg-white rounded-xl shadow-lg p-4 md:p-6">
+        <div class="flex justify-between items-center mb-4">
+            <!-- 標題字體調大為 text-3xl -->
+            <h2 class="text-3xl font-bold text-gray-800">鳴潮 聲骸搭配表</h2>
+            <button id="clearFilterBtn" class="hidden flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-base font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.013 3 22 3"/><path d="M22 3 22 11.987"/><path d="M8.5 22 22 3"/><path d="M2 2 8.5 11.235V22l4-2v-6.765L14.75 10"/></svg>
+                清除篩選
+            </button>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg border border-gray-200">
+            <table class="w-full text-left border-collapse min-w-max">
+                <thead>
+                    <!-- 表頭字體調大為 text-base (原本是 text-sm) -->
+                    <tr class="bg-blue-600 text-white text-base">
+                        <th class="p-4 cursor-pointer hover:bg-blue-700 transition-colors select-none" onclick="toggleSort()">
+                            <div class="flex items-center gap-1">
+                                星數
+                                <span id="sortIcon" class="opacity-50">↕</span>
+                            </div>
+                        </th>
+                        <th class="p-4">名字</th>
+                        
+                        <th class="p-4 relative">
+                            <div class="flex items-center gap-1 cursor-pointer hover:text-blue-200 select-none" onclick="toggleDropdown(event, 'attrDropdown')">
+                                <span id="currentAttrLabel">屬性</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <!-- 選單字體調大為 text-base -->
+                            <div id="attrDropdown" class="hidden absolute top-full left-0 mt-1 w-32 bg-white rounded-md shadow-xl border border-gray-200 z-50 py-1 text-gray-800 font-normal">
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('全部')">全部</div>
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('衍射')">衍射</div>
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('熱熔')">熱熔</div>
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('導電')">導電</div>
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('冷凝')">冷凝</div>
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('氣動')">氣動</div>
+                                <div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setFilter('湮滅')">湮滅</div>
+                            </div>
+                        </th>
+                        
+                        <th class="p-4 relative">
+                            <div class="flex items-center gap-1 cursor-pointer hover:text-blue-200 select-none" onclick="toggleDropdown(event, 'echoDropdown')">
+                                <span id="currentEchoLabel">聲骸</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <!-- 聲骸選單 (加上 max-h-64 和 overflow-y-auto 避免選單太長超出螢幕) -->
+                            <div id="echoDropdown" class="hidden absolute top-full left-0 mt-1 w-40 max-h-64 overflow-y-auto no-scrollbar bg-white rounded-md shadow-xl border border-gray-200 z-50 py-1 text-gray-800 font-normal">
+                                <!-- 這裡的選項會由 JavaScript 動態產生 -->
+                            </div>
+                        </th>
+
+                        <th class="p-4">4COST</th>
+                        <th class="p-4">3COST</th>
+                        <th class="p-4">3COST</th>
+                        <th class="p-4">1COST</th>
+                        <th class="p-4">1COST</th>
+                        <th class="p-4">副詞條優先度</th>
+                    </tr>
+                </thead>
+                <!-- 表格內容字體調大為 text-base (原本是 text-sm) -->
+                <tbody id="tableBody" class="text-base text-gray-700">
+                    <!-- 資料會由 JavaScript 動態產生在這裡 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const initialData = [
+            { id: 1, stars: 4, name: '散華', attr: '冷凝', echo: '輕雲出月', cost4: '暴撃', cost3_1: '冷凝傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃 > 暴傷 > 百分比攻擊 > 共鳴技能傷害加成 > 共鳴解放傷害加成' },
+            { id: 2, stars: 5, name: '安可', attr: '熱熔', echo: '熔山裂谷', cost4: '暴撃傷害', cost3_1: '熱熔傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 普攻傷害加成' },
+            { id: 3, stars: 5, name: '吟霖', attr: '導電', echo: '高天共奏之曲', cost4: '暴撃', cost3_1: '導電傷害加成', cost3_2: '導電傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成 > 共鳴效率' },
+            { id: 4, stars: 5, name: '卡卡羅', attr: '導電', echo: '徹空冥雷', cost4: '暴撃', cost3_1: '導電傷害加成', cost3_2: '導電傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 重撃傷害加成 > 固定攻擊' },
+            { id: 5, stars: 4, name: '白芷', attr: '冷凝', echo: '隱世回光', cost4: '治療效果加成', cost3_1: '共鳴效率', cost3_2: '共鳴效率', cost1_1: '百分比生命', cost1_2: '百分比生命', sub: '共鳴效率 > 百分比生命 > 其他' },
+            { id: 6, stars: 5, name: '漂泊者(湮滅)', attr: '湮滅', echo: '沉日劫明', cost4: '暴撃', cost3_1: '湮滅傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 固定攻擊' },
+            { id: 7, stars: 4, name: '釉瑚', attr: '冷凝', echo: '隱世回光', cost4: '治療效果加成', cost3_1: '冷凝傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成' },
+            { id: 8, stars: 5, name: '仇遠', attr: '氣動', echo: '息界同調之律', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '氣動傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 重撃傷害加成' },
+            { id: 9, stars: 5, name: '維里奈', attr: '衍射', echo: '隱世回光', cost4: '治療效果加成', cost3_1: '共鳴效率', cost3_2: '共鳴效率', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 固定攻擊' },
+            { id: 10, stars: 4, name: '燈燈', attr: '導電', echo: '徹空冥雷', cost4: '暴撃', cost3_1: '導電傷害加成', cost3_2: '導電傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 普攻傷害加成 > 固定攻擊' },
+            { id: 11, stars: 4, name: '秧秧', attr: '氣動', echo: '輕雲出月', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '氣動傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴效率' },
+            { id: 12, stars: 4, name: '熾霞', attr: '熱熔', echo: '熔山裂谷', cost4: '暴撃', cost3_1: '熱熔傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成/共鳴解放傷害加成 > 共鳴效率' },
+            { id: 13, stars: 4, name: '桃祈', attr: '湮滅', echo: '輕雲出月', cost4: '百分比防禦', cost3_1: '百分比防禦', cost3_2: '湮滅傷害加成', cost1_1: '百分比防禦', cost1_2: '百分比防禦', sub: '百分比防禦 > 共鳴效率 > 共鳴解放傷害加成' },
+            { id: 14, stars: 5, name: '西格莉卡', attr: '衍射', echo: '聽喚語義之願', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率(150%前) > 百分比攻擊 > 固定攻擊' },
+            { id: 15, stars: 4, name: '丹瑾', attr: '湮滅', echo: '沉日劫明', cost4: '暴撃', cost3_1: '湮滅傷害加成', cost3_2: '湮滅傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 固定攻擊' },
+            { id: 16, stars: 4, name: '莫特斐', attr: '熱熔', echo: '輕雲出月', cost4: '暴撃', cost3_1: '共鳴效率', cost3_2: '熱熔傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '共鳴效率 > 暴撃/暴傷 > 百分比攻擊' },
+            { id: 17, stars: 4, name: '淵武', attr: '導電', echo: '隱世回光', cost4: '暴撃', cost3_1: '導電傷害加成', cost3_2: '導電傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '共鳴效率 > 暴撃/暴傷 > 百分比防禦' },
+            { id: 18, stars: 5, name: '漂泊者(氣動)', attr: '氣動', echo: '隱世回光', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '氣動傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成' },
+            { id: 19, stars: 5, name: '坎特蕾拉', attr: '湮滅', echo: '沉日劫明', cost4: '暴撃', cost3_1: '湮滅傷害加成', cost3_2: '湮滅傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 普攻傷害加成 > 共鳴效率 > 固定攻擊' },
+            { id: 20, stars: 5, name: '布蘭特', attr: '熱熔', echo: '無懼浪濤之勇', cost4: '暴撃', cost3_1: '共鳴效率', cost3_2: '共鳴效率', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '共鳴效率 > 暴撃/暴傷 > 普攻傷害加成 > 百分比攻擊' },
+            { id: 21, stars: 5, name: '菲比', attr: '衍射', echo: '此間永駐之光', cost4: '暴撃傷害', cost3_1: '衍射傷害加成', cost3_2: '衍射傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 重撃傷害加成' },
+            { id: 22, stars: 5, name: '洛可可', attr: '湮滅', echo: '輕雲出月', cost4: '暴撃', cost3_1: '湮滅傷害加成', cost3_2: '湮滅傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 重撃傷害加成 > 固定攻擊' },
+            { id: 23, stars: 5, name: '凌陽', attr: '冷凝', echo: '凝夜白霜', cost4: '暴撃', cost3_1: '冷凝傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 >> 共鳴技能傷害加成 = 普攻傷害加成' },
+            { id: 24, stars: 5, name: '椿', attr: '湮滅', echo: '沉日劫明', cost4: '暴撃傷害', cost3_1: '湮滅傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 普攻傷害加成' },
+            { id: 25, stars: 5, name: '守岸人', attr: '衍射', echo: '隱世回光', cost4: '治療效果加成', cost3_1: '共鳴效率', cost3_2: '百分比生命', cost1_1: '百分比生命', cost1_2: '百分比生命', sub: '共鳴效率 > 百分比生命(優先回復量) >= 暴傷(優先輸出) = 共鳴解放傷害加成(優先輸出)' },
+            { id: 26, stars: 5, name: '相里要', attr: '導電', echo: '徹空冥雷', cost4: '暴撃', cost3_1: '導電傷害加成', cost3_2: '導電傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 共鳴解放傷害加成' },
+            { id: 27, stars: 5, name: '珂萊塔', attr: '冷凝', echo: '凌冽決斷之心', cost4: '暴撃傷害', cost3_1: '冷凝傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成 > 固定攻擊' },
+            { id: 28, stars: 5, name: '今汐', attr: '衍射', echo: '浮星祛暗', cost4: '暴撃傷害', cost3_1: '衍射傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴解放傷害加成 > 固定攻擊' },
+            { id: 29, stars: 5, name: '長離', attr: '熱熔', echo: '熔山裂谷', cost4: '暴撃', cost3_1: '熱熔傷害加成', cost3_2: '熱熔傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 共鳴技能傷害加成 > 固定攻擊' },
+            { id: 30, stars: 5, name: '漂泊者(衍射)', attr: '衍射', echo: '浮星祛暗', cost4: '暴撃', cost3_1: '衍射傷害加成', cost3_2: '衍射傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成 > 共鳴解放傷害加成 > 重撃傷害加成' },
+            { id: 31, stars: 5, name: '忌炎', attr: '氣動', echo: '嘨谷長風', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 重撃傷害加成' },
+            { id: 32, stars: 5, name: '鑒心', attr: '氣動', echo: '輕雲出月', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴效率' },
+            { id: 33, stars: 5, name: '贊妮', attr: '衍射', echo: '此間永駐之光', cost4: '暴撃傷害', cost3_1: '衍射傷害加成', cost3_2: '衍射傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 重撃傷害加成 > 共鳴效率' },
+            { id: 34, stars: 5, name: '夏空', attr: '氣動', echo: '流雲逝盡之空', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '氣動傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴解放傷害加成 > 共鳴效率' },
+            { id: 35, stars: 5, name: '卡提希婭', attr: '氣動', echo: '願戴榮光之旅', cost4: '暴撃 / 暴傷', cost3_1: '無', cost3_2: '無', cost1_1: '百分比生命', cost1_2: '百分比生命', sub: '暴撃/暴傷 > 百分比生命 > 普攻傷害加成 > 共鳴效率 > 其他' },
+            { id: 36, stars: 5, name: '露帕', attr: '熱熔', echo: '奔狼燎原之焰', cost4: '暴撃', cost3_1: '熱熔傷害加成', cost3_2: '熱熔傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴解放傷害加成 > 共鳴效率' },
+            { id: 37, stars: 5, name: '弗洛洛', attr: '湮滅', echo: '失序彼岸之夢', cost4: '暴撃傷害', cost3_1: '湮滅傷害加成', cost3_2: '湮滅傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴技能傷害加成 > 百分比攻擊' },
+            { id: 38, stars: 5, name: '奧古斯塔', attr: '導電', echo: '榮鬥鑄鋒之冠', cost4: '暴撃', cost3_1: '導電傷害加成', cost3_2: '導電傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率(130%前) > 百分比攻擊 > 重撃傷害加成' },
+            { id: 39, stars: 5, name: '尤諾', attr: '氣動', echo: '榮鬥鑄鋒之冠', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '氣動傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 >= 共鳴效率 > 百分比攻擊 > 共鳴解放傷害加成' },
+            { id: 40, stars: 5, name: '嘉貝莉娜', attr: '熱熔', echo: '焚羽獵魔之影', cost4: '暴撃', cost3_1: '熱熔傷害加成', cost3_2: '熱熔傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 重撃傷害加成 > 共鳴效率' },
+            { id: 41, stars: 5, name: '千咲', attr: '湮滅', echo: '命理崩毀之弦', cost4: '暴撃傷害', cost3_1: '湮滅傷害加成', cost3_2: '湮滅傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 共鳴解放傷害加成' },
+            { id: 42, stars: 5, name: '琳奈', attr: '衍射', echo: '逆光躍彩之約', cost4: '暴撃傷害', cost3_1: '衍射傷害加成', cost3_2: '衍射傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 普攻傷害加成' },
+            { id: 43, stars: 5, name: '莫寧', attr: '熱熔', echo: '星構尋輝之環', cost4: '治療效果加成', cost3_1: '共鳴效率', cost3_2: '共鳴效率', cost1_1: '百分比防禦', cost1_2: '百分比防禦', sub: '共鳴效率 > 百分比防禦 > 暴撃(15%前) > 共鳴解放傷害加成 > 暴傷' },
+            { id: 44, stars: 5, name: '愛彌斯', attr: '熱熔', echo: '長路啟航之星', cost4: '暴撃傷害', cost3_1: '熱熔傷害加成', cost3_2: '熱熔傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率(120%前) > 百分比攻擊 > 共鳴解放傷害加成 > 固定攻擊' },
+            { id: 45, stars: 5, name: '陸。赫斯', attr: '衍射', echo: '流金溯真之式', cost4: '暴撃傷害', cost3_1: '衍射傷害加成', cost3_2: '衍射傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率(125%前) > 百分比攻擊 > 普攻傷害加成 > 固定攻擊' },
+            { id: 46, stars: 5, name: '折枝', attr: '冷凝', echo: '高天共奏之曲', cost4: '暴撃', cost3_1: '共鳴效率', cost3_2: '冷凝傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 共鳴效率 > 百分比攻擊 > 普攻傷害加成' },
+            { id: 47, stars: 4, name: '秋水', attr: '氣動', echo: '嘨谷長風', cost4: '暴撃', cost3_1: '氣動傷害加成', cost3_2: '百分比攻擊', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共鳴技能傷害加成/共鳴解放傷害加成/普攻傷害加成' },
+            { id: 48, stars: 4, name: '卜靈', attr: '導電', echo: '隱世回光', cost4: '治療效果加成', cost3_1: '共鳴效率', cost3_2: '共鳴效率', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '共鳴效率 > 百分比攻擊 > 暴撃/暴傷' }
+        ];
+
+        let currentFilter = '全部';     // 屬性篩選狀態
+        let currentEchoFilter = '全部'; // 聲骸篩選狀態
+        let sortDirection = null;
+
+        // 動態生成聲骸下拉選單選項
+        function initEchoDropdown() {
+            const uniqueEchos = [...new Set(initialData.map(item => item.echo))];
+            const echoDropdown = document.getElementById('echoDropdown');
+            let html = `<div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setEchoFilter('全部')">全部</div>`;
+            uniqueEchos.forEach(echo => {
+                html += `<div class="px-4 py-2 text-base cursor-pointer hover:bg-blue-50" onclick="setEchoFilter('${echo}')">${echo}</div>`;
+            });
+            echoDropdown.innerHTML = html;
+        }
+
+        function getAttrColor(attr) {
+            const colors = {
+                '衍射': 'bg-yellow-100 text-yellow-800',
+                '熱熔': 'bg-red-100 text-red-800',
+                '導電': 'bg-purple-100 text-purple-800',
+                '冷凝': 'bg-blue-100 text-blue-800',
+                '氣動': 'bg-teal-100 text-teal-800',
+                '湮滅': 'bg-gray-200 text-gray-800',
+            };
+            return colors[attr] || 'bg-gray-100 text-gray-800';
+        }
+
+        function renderTable() {
+            let data = [...initialData];
+
+            // 處理屬性篩選
+            if (currentFilter !== '全部') {
+                data = data.filter(item => item.attr === currentFilter);
+                document.getElementById('currentAttrLabel').innerText = currentFilter;
+            } else {
+                document.getElementById('currentAttrLabel').innerText = '屬性';
+            }
+
+            // 處理聲骸篩選
+            if (currentEchoFilter !== '全部') {
+                data = data.filter(item => item.echo === currentEchoFilter);
+                document.getElementById('currentEchoLabel').innerText = currentEchoFilter;
+            } else {
+                document.getElementById('currentEchoLabel').innerText = '聲骸';
+            }
+
+            // 判斷是否顯示清除按鈕
+            if (currentFilter !== '全部' || currentEchoFilter !== '全部') {
+                document.getElementById('clearFilterBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('clearFilterBtn').classList.add('hidden');
+            }
+
+            // 處理排序
+            const sortIcon = document.getElementById('sortIcon');
+            if (sortDirection === 'asc') {
+                data.sort((a, b) => a.stars - b.stars);
+                sortIcon.innerText = '↑';
+                sortIcon.classList.remove('opacity-50');
+            } else if (sortDirection === 'desc') {
+                data.sort((a, b) => b.stars - a.stars);
+                sortIcon.innerText = '↓';
+                sortIcon.classList.remove('opacity-50');
+            } else {
+                sortIcon.innerText = '↕';
+                sortIcon.classList.add('opacity-50');
+            }
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colSpan="10" class="p-8 text-center text-gray-500">沒有找到符合條件的資料</td></tr>`;
+                return;
+            }
+
+            data.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = `border-b border-gray-100 hover:bg-gray-100 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`;
+                
+                tr.innerHTML = `
+                    <td class="p-4 font-medium text-center">${row.stars}</td>
+                    <td class="p-4 font-bold whitespace-nowrap">${row.name}</td>
+                    <td class="p-4 whitespace-nowrap">
+                        <span class="px-2 py-1 rounded-md text-sm font-bold ${getAttrColor(row.attr)}">${row.attr}</span>
+                    </td>
+                    <td class="p-4 whitespace-nowrap">${row.echo}</td>
+                    <td class="p-4 whitespace-nowrap">${row.cost4}</td>
+                    <td class="p-4 whitespace-nowrap">${row.cost3_1}</td>
+                    <td class="p-4 whitespace-nowrap">${row.cost3_2}</td>
+                    <td class="p-4 whitespace-nowrap">${row.cost1_1}</td>
+                    <td class="p-4 whitespace-nowrap">${row.cost1_2}</td>
+                    <td class="p-4 text-sm text-gray-600 min-w-[300px] leading-relaxed">${row.sub}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleSort() {
+            if (sortDirection === null) sortDirection = 'desc';
+            else if (sortDirection === 'desc') sortDirection = 'asc';
+            else sortDirection = null;
+            renderTable();
+        }
+
+        // 修改為可以接收特定下拉選單 ID 的函數
+        function toggleDropdown(e, dropdownId) {
+            e.stopPropagation();
+            
+            // 取得目標選單
+            const targetDropdown = document.getElementById(dropdownId);
+            const isHidden = targetDropdown.classList.contains('hidden');
+            
+            // 先把所有的選單都關閉
+            document.getElementById('attrDropdown').classList.add('hidden');
+            document.getElementById('echoDropdown').classList.add('hidden');
+            
+            // 如果原本是隱藏的，就把它打開
+            if (isHidden) {
+                targetDropdown.classList.remove('hidden');
+            }
+        }
+
+        function setFilter(attr) {
+            currentFilter = attr;
+            document.getElementById('attrDropdown').classList.add('hidden');
+            renderTable();
+        }
+
+        // 新增設定聲骸篩選的函數
+        function setEchoFilter(echo) {
+            currentEchoFilter = echo;
+            document.getElementById('echoDropdown').classList.add('hidden');
+            renderTable();
+        }
+
+        document.getElementById('clearFilterBtn').addEventListener('click', () => {
+            currentFilter = '全部';
+            currentEchoFilter = '全部';
+            renderTable();
+        });
+
+        document.addEventListener('click', (e) => {
+            // 點擊空白處時關閉所有選單
+            document.getElementById('attrDropdown').classList.add('hidden');
+            document.getElementById('echoDropdown').classList.add('hidden');
+        });
+
+        // 初始化時先產生聲骸選單，再渲染表格
+        initEchoDropdown();
+        renderTable();
+    </script>
+</body>
+</html>
