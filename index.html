@@ -26,7 +26,8 @@
             </button>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <!-- 【修改重點 1】: 加上 id="tableContainer" 以及 transition-all duration-300 讓高度變化有平滑動畫 -->
+        <div id="tableContainer" class="overflow-x-auto rounded-lg border border-gray-200 transition-all duration-300">
             <table class="w-full text-left border-collapse min-w-max">
                 <thead>
                     <!-- 表頭字體調大為 text-base (原本是 text-sm) -->
@@ -136,11 +137,10 @@
             { id: 49, stars: 5, name: '緋雪', attr: '冷凝', echo: '雪落無聲之願', cost4: '暴擊傷害', cost3_1: '冷凝傷害加成', cost3_2: '冷凝傷害加成', cost1_1: '百分比攻擊', cost1_2: '百分比攻擊', sub: '暴撃/暴傷 > 百分比攻擊 > 共嗚解放傷害加成 > 固定攻擊' }
         ];
 
-        let currentFilter = '全部';     // 屬性篩選狀態
-        let currentEchoFilter = '全部'; // 聲骸篩選狀態
+        let currentFilter = '全部';     
+        let currentEchoFilter = '全部'; 
         let sortDirection = null;
 
-        // 動態生成聲骸下拉選單選項
         function initEchoDropdown() {
             const uniqueEchos = [...new Set(initialData.map(item => item.echo))];
             const echoDropdown = document.getElementById('echoDropdown');
@@ -166,7 +166,6 @@
         function renderTable() {
             let data = [...initialData];
 
-            // 處理屬性篩選
             if (currentFilter !== '全部') {
                 data = data.filter(item => item.attr === currentFilter);
                 document.getElementById('currentAttrLabel').innerText = currentFilter;
@@ -174,7 +173,6 @@
                 document.getElementById('currentAttrLabel').innerText = '屬性';
             }
 
-            // 處理聲骸篩選
             if (currentEchoFilter !== '全部') {
                 data = data.filter(item => item.echo === currentEchoFilter);
                 document.getElementById('currentEchoLabel').innerText = currentEchoFilter;
@@ -182,14 +180,12 @@
                 document.getElementById('currentEchoLabel').innerText = '聲骸';
             }
 
-            // 判斷是否顯示清除按鈕
             if (currentFilter !== '全部' || currentEchoFilter !== '全部') {
                 document.getElementById('clearFilterBtn').classList.remove('hidden');
             } else {
                 document.getElementById('clearFilterBtn').classList.add('hidden');
             }
 
-            // 處理排序
             const sortIcon = document.getElementById('sortIcon');
             if (sortDirection === 'asc') {
                 data.sort((a, b) => a.stars - b.stars);
@@ -241,34 +237,39 @@
             renderTable();
         }
 
-        // 修改為可以接收特定下拉選單 ID 的函數
+        // 【修改重點 2】: 點擊打開選單時，動態幫表格加上 min-h-[320px] 撐開空間
         function toggleDropdown(e, dropdownId) {
             e.stopPropagation();
             
-            // 取得目標選單
             const targetDropdown = document.getElementById(dropdownId);
             const isHidden = targetDropdown.classList.contains('hidden');
+            const tableContainer = document.getElementById('tableContainer');
             
             // 先把所有的選單都關閉
             document.getElementById('attrDropdown').classList.add('hidden');
             document.getElementById('echoDropdown').classList.add('hidden');
             
-            // 如果原本是隱藏的，就把它打開
+            // 如果原本是隱藏的，就把它打開，並動態增加高度防止裁切
             if (isHidden) {
                 targetDropdown.classList.remove('hidden');
+                tableContainer.classList.add('min-h-[320px]'); 
+            } else {
+                tableContainer.classList.remove('min-h-[320px]');
             }
         }
 
+        // 【修改重點 3】: 選擇完畢後，把動態高度移除
         function setFilter(attr) {
             currentFilter = attr;
             document.getElementById('attrDropdown').classList.add('hidden');
+            document.getElementById('tableContainer').classList.remove('min-h-[320px]');
             renderTable();
         }
 
-        // 新增設定聲骸篩選的函數
         function setEchoFilter(echo) {
             currentEchoFilter = echo;
             document.getElementById('echoDropdown').classList.add('hidden');
+            document.getElementById('tableContainer').classList.remove('min-h-[320px]');
             renderTable();
         }
 
@@ -278,13 +279,13 @@
             renderTable();
         });
 
+        // 【修改重點 4】: 點擊空白處關閉選單時，也把動態高度移除
         document.addEventListener('click', (e) => {
-            // 點擊空白處時關閉所有選單
             document.getElementById('attrDropdown').classList.add('hidden');
             document.getElementById('echoDropdown').classList.add('hidden');
+            document.getElementById('tableContainer').classList.remove('min-h-[320px]');
         });
 
-        // 初始化時先產生聲骸選單，再渲染表格
         initEchoDropdown();
         renderTable();
     </script>
